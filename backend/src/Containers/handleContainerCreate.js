@@ -26,58 +26,63 @@ export const getContainerPort = async(projectId)=>{
 
 export const handleContainerCreate = async (projectId, terminalSocket, req, tcpSocket, head) => {
     try {
-        //delete if any existing container with the same name
+        //check if any existing container with the same name
         const existingContainer = await docker.listContainers({
+            all: true,
             filters: {
                 name: [projectId]
             }
         });
-        if(existingContainer.length > 0){
-            console.log("container exist stopping and removing it");
-            const container = docker.getContainer(existingContainer[0].Id);
-            await container.remove({force: true});
-            console.log("container removed 1");
-        }      
-        
-        const container = await docker.createContainer({
-        Image: 'sandbox',
-        AttachStdin: true,
-        AttachStdout: true,
-        AttachStderr: true,
-        Cmd: ['/bin/bash'],
-        name: projectId,
-        Tty: true,
-        // 1. Declare the anonymous volume at the root level of the config
-        Volumes: {
-            "/home/sandbox/app/node_modules": {} 
-        },
-        ExposedPorts: {
-                "5173/tcp": {}
-            },
-        Env: [
-                'CHOKIDAR_USEPOLLING=true', // Forces Vite to see file changes on Windows hosts
-                'VITE_USER_NODE_ENV=development'
-            ],
-        HostConfig: {
-            Binds: [`${process.cwd()}/projects/${projectId}:/home/sandbox/app`],
-            PortBindings: {
-                "5173/tcp": [
-                    {
-                        "HostPort": "0"
-                    }
-                ]
-            },
-            
 
-        },
-    });
-    console.log("Container created", container.id);
-    await container.start();
-    console.log("container started");
+        let container;
+
+        if(existingContainer.length > 0){
+            console.log("Container exists, reusing it");
+            container = docker.getContainer(existingContainer[0].Id);
+            const containerInfo = await container.inspect();
+            if (!containerInfo.State.Running) {
+                console.log("Starting existing stopped container");
+                await container.start();
+            }
+        } else {
+            container = await docker.createContainer({
+                Image: 'sandbox',
+                AttachStdin: true,
+                AttachStdout: true,
+                AttachStderr: true,
+                Cmd: ['/bin/bash'],
+                name: projectId,
+                Tty: true,
+                // 1. Declare the anonymous volume at the root level of the config
+                Volumes: {
+                    "/home/sandbox/app/node_modules": {} 
+                },
+                ExposedPorts: {
+                    "5173/tcp": {}
+                },
+                Env: [
+                    'CHOKIDAR_USEPOLLING=true', // Forces Vite to see file changes on Windows hosts
+                    'VITE_USER_NODE_ENV=development'
+                ],
+                HostConfig: {
+                    Binds: [`${process.cwd()}/projects/${projectId}:/home/sandbox/app`],
+                    PortBindings: {
+                        "5173/tcp": [
+                            {
+                                "HostPort": "0"
+                            }
+                        ]
+                    },
+                },
+            });
+            console.log("Container created", container.id);
+            await container.start();
+            console.log("Container started");
+        }
 
     terminalSocket.handleUpgrade(req, tcpSocket, head, (establishedWSConnection) => {
-        console.log("connection upgraded to web socket")
-        terminalSocket.emit("connection", establishedWSConnection, req, container )
+        console.log("connection upgraded to web socket");
+        terminalSocket.emit("connection", establishedWSConnection, req, container );
     });
 
     } catch (error) {

@@ -33,7 +33,7 @@ export default function FileContextmenu({ x, y, path }) {
         Delete file
     </button>
     <button className="fileContextButton"
-    onClick={()=>{handleFileRename}}
+    onClick={()=>{handleFileRename()}}
     >
         Rename file
     </button>

@@ -10,8 +10,10 @@ import { handleEditorSocketEvents } from "./socketHandlers/editorEventHandler.js
 import { handleContainerCreate } from "./Containers/handleContainerCreate.js";
 import { WebSocketServer } from "ws";
 import { handleTerminalCreation } from "./Containers/handleTerminalCreation.js";
+import { registerConnection, unregisterConnection, startReaperJob } from "./Containers/containerReaper.js";
 
 const app = express();
+startReaperJob();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
@@ -35,61 +37,14 @@ const editorNamespace = io.of("/editor");
 editorNamespace.on("connection", (socket) => {
   console.log("a user connected");
   let projectId = socket.handshake.query.projectId;
-
-  // if (projectId) {
-  //   let lastTouched = new Map();
-  //   var watcher = chokidar.watch(`./projects/${projectId}`, {
-  //     ignored: (path) => path.includes("node_modules"),
-  //     persistent: true, //watcher will run till app is running
-  //     awaitWriteFinish: {
-  //       stabilityThreshold: 50,
-  //     },
-  //     ignoreInitial: true, //ignore the initial add events
-  //   });
-  //   // watcher.on("all", (event, filePath) => {
-      
-  //   //   if (event === 'add' || event === 'change') {
-  //   //     const now = Date.now();
-  //   //     const lastTime = lastTouched.get(filePath) || 0;
-        
-  //   //     // Prevent infinite loops caused by our own `touch` commands
-  //   //     if (now - lastTime < 1500) {
-  //   //        return;
-  //   //     }
-
-  //   //     const container = activeContainers.get(projectId);
-  //   //     if (container) {
-  //   //       const normalizedPath = filePath.replace(/\\/g, '/');
-  //   //       const relativePath = normalizedPath.split(`projects/${projectId}/`)[1];
-  //   //       if (relativePath) {
-  //   //         const containerPath = `/home/sandbox/app/${relativePath}`;
-  //   //         console.log(`Sending touch command to container for: ${containerPath}`);
-  //   //         lastTouched.set(filePath, now);
-
-  //   //         // Add a small delay to ensure the file system sync from Windows host to Docker VM is complete
-  //   //         // before we trigger the inotify event inside the container.
-  //   //         setTimeout(() => {
-  //   //           container.exec({
-  //   //             Cmd: ['touch', containerPath],
-  //   //             AttachStdout: false,
-  //   //             AttachStderr: false
-  //   //           }, (err, exec) => {
-  //   //             if (!err && exec) {
-  //   //               exec.start({ hijack: true }, () => {}); 
-  //   //             }
-  //   //           });
-  //   //         }, 300);
-  //   //       }
-  //   //     }
-  //   //   }
-  //   // });
-  // }  
+  registerConnection(projectId);
 
   handleEditorSocketEvents(socket, editorNamespace);
 
   socket.on("disconnect", async () => {
     //await watcher.close();
     console.log("editor disconnected");
+    unregisterConnection(projectId);
   });
 });
 
@@ -114,6 +69,8 @@ server.on("upgrade", async (req, tcpSocket, head) => {
 
 webSocketForTerminal.on("connection", (ws, req, container) => {
   console.log("Terminal connected");
+  const projectId = req.url.split("=")[1];
+  registerConnection(projectId);
 
   handleTerminalCreation(ws, container);
 
@@ -123,11 +80,6 @@ webSocketForTerminal.on("connection", (ws, req, container) => {
 
   ws.on("close", () => {
     console.log("Terminal disconnected");
-    // container.remove({force: true}, (err, data)=> {
-    //   if(err){
-    //     console.log("Error while removing container",err);
-    //   }
-    //   console.log("container removed",data);
-    // });
+    unregisterConnection(projectId);
   });
 });

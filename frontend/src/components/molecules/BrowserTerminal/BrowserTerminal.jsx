@@ -4,7 +4,6 @@ import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
 import { useParams } from 'react-router-dom'
 import { AttachAddon } from '@xterm/addon-attach'
-import { useEditorSocketStore } from '../../../store/editorSocketStore'
 import useTerminalSocketStore from '../../../store/terminalSocketStore';
 import useFetchPortLogicStore from '../../../store/fetchportLogicStore'
 
@@ -35,7 +34,6 @@ function BrowserTerminal() {
         });
         terminal.open(terminalRef.current);
         
-
         const ws = new WebSocket(`ws://localhost:3000/terminal?projectId=${projectIdFromURL}`);
         setTerminalSocket(ws);
 
@@ -63,11 +61,10 @@ function BrowserTerminal() {
     style={{
         //setwidth and height
         width : '100%',
-        height:'80vh',
+        height:'53vh',
     }}
     className='terminal'
     id='terminal-container'
-
     >
       
     </div>

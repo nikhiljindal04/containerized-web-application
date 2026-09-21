@@ -1,90 +1,99 @@
-# Containerized Vite React Project - Troubleshooting & Solutions
+# 💻 \[containerized-web-ide\] - Web-Based IDE
 
-## Issue 1: Vite Server Not Reloading (HMR Not Working)
+> A brief, catchy description of your Web IDE (e.g., "A fast, lightweight, and collaborative web-based code editor built for modern developers.")
 
-### **Problem / Cause:**
-When running a Vite server inside a Docker container with host directories mounted as volumes (via `HostConfig.Binds`), file system events (like file saves) on the host OS (especially Windows/macOS) are not reliably propagated to the Docker container. 
-Vite's file watcher (Chokidar) relies on these native OS events to trigger Hot Module Replacement (HMR). Without them, Vite doesn't know when a file is edited, so the page does not reload.
+## 📖 About The Project
 
-### **Solution:**
-You need to configure Vite to use **polling** to watch for file changes, rather than relying on native file system events. 
+\[containerized-web-ide\] is a fully functional Integrated Development Environment (IDE) that runs entirely in your browser. It allows developers to write, compile, and execute code in various languages without needing to install any local dependencies.
 
-Update your `vite.config.js` (or `vite.config.ts`) in your React project to include the following configuration:
+![alt text](<Screenshot 2026-09-21 164018.png>)
 
-```javascript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+## ✨ Features
 
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    host: '0.0.0.0', // Expose to all network interfaces
-    watch: {
-      usePolling: true, // Enable polling for file changes
-    }
-  }
-})
-```
+* **Multi-Language Support:** Compile and run code in Python, JavaScript, Java, C++, and more.
 
----
+* **Integrated Terminal:** Run shell commands directly from the browser.
 
-## Issue 2: Terminal Getting Stuck (Especially during `npm install`)
+* **File System Management:** Create, delete, and organize files in a virtual workspace.
 
-### **Problem / Cause:**
-The terminal gets stuck because of how the Docker command execution stream is being parsed in `handleTerminalCreation.js`.
+## 🛠️ Tech Stack
 
-In `handleTerminalCreation.js`, you are creating the exec instance with `Tty: true`:
-```javascript
-container.exec({
-  Cmd: ["/bin/bash"],
-  Tty: true, // <-- TTY is enabled
-  // ...
-})
-```
-When `Tty: true` is set, Docker provides a **raw** output stream. However, the custom function `processStreamOutput` is designed to parse a **multiplexed** stream (which Docker only uses when `Tty: false`). It tries to read an 8-byte header `[type, 0, 0, 0, length1, length2, length3, length4]` from every chunk. 
+* **Frontend:** React.js / Vue.js, Tailwind CSS
 
-Because the stream is raw text, `processStreamOutput` incorrectly interprets regular terminal output (like ANSI escape codes or the word "npm") as the 8-byte header, resulting in a massive, incorrect `nextDataLength`. The buffer then hangs indefinitely waiting for gigabytes of data that will never arrive.
+* **Code Editor:** Monaco Editor (VS Code core)
 
-### **Solution:**
-Since you are using `Tty: true`, you must bypass the 8-byte header demultiplexing completely. You can just send the raw stream data directly to the WebSocket.
+* **Backend:** Node.js, Express
 
-Update `handleTerminalCreation.js` to remove `processStreamOutput` and pipe the stream directly:
+* **Code Execution Environment:** Docker (for isolated compilation/execution)
 
-```javascript
-export const handleTerminalCreation = (ws, container) => {
-  container.exec(
-    {
-      Cmd: ["/bin/bash"],
-      AttachStdin: true,
-      AttachStdout: true,
-      AttachStderr: true,
-      Tty: true,
-      User: "sandbox",
-    },
-    (err, exec) => {
-      if (err) {
-        console.log("error while starting exec", err);
-        return;
-      }
+* **Database:** MongoDB / PostgreSQL (for user accounts and saved snippets)
 
-      exec.start({ hijack: true }, (err, stream) => {
-        if (err) {
-          console.log("error while starting exec", err);
-          return;
-        }
+* **WebSocket:** Socket.io (for real-time collaboration)
 
-        // CORRECTED: Pipe the raw TTY stream directly to the WebSocket
-        stream.on("data", (chunk) => {
-          ws.send(chunk);
-        });
+## 🚀 Getting Started
 
-        // Write WebSocket messages directly to the stream
-        ws.on("message", (data) => {
-          stream.write(data);
-        });
-      });
-    }
-  );
-};
-```
-By removing `processStreamOutput` and piping `stream.on("data")` directly to `ws.send()`, the terminal will output smoothly without getting stuck.
+Follow these instructions to set up the project locally on your machine.
+
+### Prerequisites
+
+* [Node.js](https://nodejs.org/?utm_source=gemini) (v16 or higher)
+
+* [Docker](https://www.docker.com/?utm_source=gemini) (Required for local code execution engines)
+
+* [npm](https://www.npmjs.com/?utm_source=gemini) or [yarn](https://yarnpkg.com/?utm_source=gemini)
+
+### Installation
+
+1. **Clone the repository**
+
+   ```
+   git clone https://github.com/yourusername/your-web-ide.git
+   cd your-web-ide
+   
+   ```
+
+2. **Install dependencies for the server**
+
+   ```
+   cd server
+   npm install
+   
+   ```
+
+3. **Install dependencies for the client**
+
+   ```
+   cd ../client
+   npm install
+   
+   ```
+
+4. **Set up Environment Variables**
+   Create a `.env` file in the `server` directory and add your configurations:
+
+   ```
+   PORT=3000
+   DATABASE_URL=your_database_connection_string
+   JWT_SECRET=your_secret_key
+   
+   ```
+
+5. **Run the application**
+   *Start the backend server:*
+
+   ```
+   cd server
+   npm run dev
+   
+   ```
+
+   *Start the frontend client:*
+
+   ```
+   cd client
+   npm start
+   
+   ```
+
+6. **Open your browser**
+   Navigate to `http://localhost:3000` to see the IDE in action!

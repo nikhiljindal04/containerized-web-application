@@ -32,7 +32,6 @@ export default function EditorComponent() {
     }
     timerRef.current = setTimeout(() => {
       const editorContent = value;
-      console.log("hii event fired")
       editorSocket.emit("writeFile", {
         pathToFileOrFolder: activeFileTab.path,
         data: editorContent,

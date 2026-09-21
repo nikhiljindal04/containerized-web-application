@@ -10,7 +10,7 @@ export default function Createproject() {
 
     const handleCreateProject = async () => {
         try {
-            console.log("api calling")
+            console.log("api calling");
             const response = await createProjectMutation();
             navigate(`/project/${response.data}`);
             console.log("redirect to the editor");
