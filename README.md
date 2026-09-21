@@ -1,12 +1,13 @@
-# 💻 \[containerized-web-ide\] - Web-Based IDE
+# 💻 Containerized-web-ide - Web-Based IDE
 
-> A brief, catchy description of your Web IDE (e.g., "A fast, lightweight, and collaborative web-based code editor built for modern developers.")
+A highly interactive, browser-based integrated development environment (IDE) inspired by Replit. This project provides developers with an isolated, real-time coding workspace directly in their browser, complete with a fully functional terminal and rich code editing capabilities.
 
 ## 📖 About The Project
 
-\[containerized-web-ide\] is a fully functional Integrated Development Environment (IDE) that runs entirely in your browser. It allows developers to write, compile, and execute code in various languages without needing to install any local dependencies.
+Containerized-web-ide is a fully functional Integrated Development Environment (IDE) that runs entirely in your browser. It allows developers to write, compile, and execute code in various languages without needing to install any local dependencies.
 
-![alt text](<Screenshot 2026-09-21 164018.png>)
+<!-- Add image photo.png -->
+![Project Screenshot](Photo.png)
 
 ## ✨ Features
 
