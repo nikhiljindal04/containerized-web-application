@@ -8,6 +8,9 @@ const useActiveFileTabStore = create((set) => {
       set({
         activeFileTab: { path: path, value: value, extension: extension }
       });
+    },
+    clearActiveFileTab: () => {
+      set({ activeFileTab: null });
     }
   };
 });
