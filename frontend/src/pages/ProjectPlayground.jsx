@@ -39,66 +39,71 @@ export default function ProjectPlayground() {
   
 
   return (
-    <>
-      <div style={{ display: "flex" }}>
-        
-        {projectId && (
-        
+    <div style={{ width: "100vw", height: "100vh", overflow: "hidden" }}>
+      {/* 3rd Allotment: splits TreeStructure and the 2nd allotment */}
+      <Allotment>
+        <Allotment.Pane
+          preferredSize={250}
+          minSize={200}
+          maxSize={450}
+          visible={Boolean(projectId)}
+        >
           <div
             style={{
               backgroundColor: "#333254",
               paddingRight: "10px",
               paddingTop: "0.3vh",
-              minWidth: "250px",
-              maxWidth: "25%",
-              height: "100vh",
+              height: "100%",
               overflow: "auto",
             }}
           >
-            <TreeStructure />
+            {projectId && <TreeStructure />}
           </div>
-        )}
-        <div
-        style={{
-          width: "100vw",
-          height: "100vh",
-        }}
-        >
-          <Allotment>
-            <div
-            //set basic styling for vertical split
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              width: "100%",
-              height: "100%",
-              backgroundColor:"#282a35",
-            }}
-            >
-              <Allotment
-                vertical={true}
-                >
-                <div>
-                  <EditorComponent />
-                </div>
+        </Allotment.Pane>
 
-                <div style={{
-                  borderTop: "1px solid #3a3a3a",
-                }}>
-                  <BrowserTerminal/>
-                </div>
-              </Allotment>
-            </div>
-            <div>
-              {projectId && <Browser/>}
-            </div>
+        {/* 2nd Allotment: splits 1st allotment and Browser */}
+        <Allotment.Pane>
+          <Allotment>
+            {/* 1st Allotment: splits EditorComponent and BrowserTerminal vertically */}
+            <Allotment.Pane preferredSize="60%">
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: "#282a35",
+                }}
+              >
+                <Allotment vertical={true}>
+                  <Allotment.Pane preferredSize="70%">
+                    <div>
+                      <EditorComponent />
+                    </div>
+                  </Allotment.Pane>
+
+                  <Allotment.Pane preferredSize="30%">
+                    <div
+                      style={{
+                        borderTop: "1px solid #3a3a3a",
+                        height: "100%",
+                      }}
+                    >
+                      <BrowserTerminal />
+                    </div>
+                  </Allotment.Pane>
+                </Allotment>
+              </div>
+            </Allotment.Pane>
+
+            <Allotment.Pane preferredSize="40%" visible={Boolean(projectId)}>
+              <div>
+                <Browser />
+              </div>
+            </Allotment.Pane>
           </Allotment>
-        </div>
-      </div>
-      {/* <EditorButton />
-      <EditorButton isActive={true} /> */}
-      
-      
-    </>
+        </Allotment.Pane>
+      </Allotment>
+    </div>
   );
 }

@@ -34,7 +34,12 @@ function BrowserTerminal() {
         });
         terminal.open(terminalRef.current);
         
-        const ws = new WebSocket(`ws://localhost:3000/terminal?projectId=${projectIdFromURL}`);
+        const token = useAuthStore.getState().token;
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+        const wsProtocol = backendUrl.startsWith("https") ? "wss:" : "ws:";
+        const wsHost = backendUrl.replace(/^https?:\/\//, "");
+        const wsUrl = `${wsProtocol}//${wsHost}/terminal?projectId=${projectIdFromURL}${token ? `&token=${token}` : ""}`;
+        const ws = new WebSocket(wsUrl);
         setTerminalSocket(ws);
 
         ws.onopen = () => {

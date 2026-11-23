@@ -1,16 +1,19 @@
 import express from "express";
 import { PORT } from "./config/serverConfig.js";
+import { connectDB } from "./config/dbConfig.js";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import apiRouter from "./routes/index.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import chokidar from "chokidar";
-import path from "path";
 import { handleEditorSocketEvents } from "./socketHandlers/editorEventHandler.js";
 import { handleContainerCreate } from "./Containers/handleContainerCreate.js";
 import { WebSocketServer } from "ws";
 import { handleTerminalCreation } from "./Containers/handleTerminalCreation.js";
 import { registerConnection, unregisterConnection, startReaperJob } from "./Containers/containerReaper.js";
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 startReaperJob();
@@ -24,7 +27,13 @@ const io = new Server(server, {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
 app.get("/ping", (req, res) => {
   res.send("pong");
@@ -83,3 +92,6 @@ webSocketForTerminal.on("connection", (ws, req, container) => {
     unregisterConnection(projectId);
   });
 });
+
+export { app, server };
+
