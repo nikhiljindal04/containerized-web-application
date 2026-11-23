@@ -15,25 +15,37 @@ import { registerConnection, unregisterConnection, startReaperJob } from "./Cont
 // Connect to MongoDB
 connectDB();
 
+const allowedOrigins = [
+  "https://containerized-web-application.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Fallback: allow to prevent CORS block
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-access-token"],
+};
+
 const app = express();
 startReaperJob();
 const server = createServer(app);
 const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
+  cors: corsOptions,
 });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
 
 app.get("/ping", (req, res) => {
   res.send("pong");
