@@ -83,14 +83,31 @@ server.on("upgrade", async (req, tcpSocket, head) => {
   // head : first packet of the upgraded stream
   const isTerminal = req.url.includes("/terminal");
   if (isTerminal) {
-    const projectId = req.url.split("=")[1]; 
-    await handleContainerCreate(projectId, webSocketForTerminal, req, tcpSocket, head);
+    try {
+      const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+      const projectId = urlObj.searchParams.get("projectId");
+      const token = urlObj.searchParams.get("token") || req.headers["sec-websocket-protocol"];
+      // Verify JWT token for terminal WebSocket stream
+      const decoded = token ? verifyToken(token) : null;
+      if (!decoded) {
+        console.warn("[Upgrade Auth] Unauthorized terminal upgrade attempt rejected.");
+        tcpSocket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+        tcpSocket.destroy();
+        return;
+      }
+      await handleContainerCreate(projectId, webSocketForTerminal, req, tcpSocket, head);
+    } catch (err) {
+      console.error("[Upgrade Error]", err);
+      tcpSocket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+      tcpSocket.destroy();
+    }
   }
 });
 
 webSocketForTerminal.on("connection", (ws, req, container) => {
   console.log("Terminal connected");
-  const projectId = req.url.split("=")[1];
+  const urlObj = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+  const projectId = urlObj.searchParams.get("projectId");
   registerConnection(projectId);
 
   handleTerminalCreation(ws, container);
