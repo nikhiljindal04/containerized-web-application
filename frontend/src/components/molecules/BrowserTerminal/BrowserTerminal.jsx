@@ -5,7 +5,8 @@ import '@xterm/xterm/css/xterm.css'
 import { useParams } from 'react-router-dom'
 import { AttachAddon } from '@xterm/addon-attach'
 import useTerminalSocketStore from '../../../store/terminalSocketStore';
-import useFetchPortLogicStore from '../../../store/fetchportLogicStore'
+import useFetchPortLogicStore from '../../../store/fetchportLogicStore';
+import { useAuthStore } from '../../../store/authStore';
 
 function BrowserTerminal() {
 

@@ -11,6 +11,7 @@ import useFetchPortLogicStore from "../store/fetchportLogicStore";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 import { Divider } from "antd";
+import { useAuthStore } from "../store/authStore";
 
 export default function ProjectPlayground() {
   const { projectId: projectIdFromURL } = useParams();
@@ -20,8 +21,10 @@ export default function ProjectPlayground() {
 
   useEffect(() => {
     setProjectId(projectIdFromURL);
+    const token = useAuthStore.getState().token;
     const socketConn = io(`${import.meta.env.VITE_BACKEND_URL}/editor`, {
-      query: { projectId: projectId },
+      auth: { token },
+      query: { projectId: projectId, token },
     });
     
     socketConn.on("connect", () => {
